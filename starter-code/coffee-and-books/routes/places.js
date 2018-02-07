@@ -3,7 +3,7 @@ var router = express.Router();
 
 const Place = require("../models/place");
 //list all places
-router.get("/places", function(req, res, next) {
+router.get("/", function(req, res, next) {
   Place.find({}, (err, placesArray) => {
     if (err) {
       return next(err);
@@ -33,6 +33,61 @@ router.get("/:id", function(req, res, next) {
   );
 });
 
+router.post("/", (req, res, next) => {
+  const placeDetails = {
+    title: req.body.title,
+    description: req.body.description,
+    location: req.body.location
+  };
+  const newPlace = new place(placeDetails);
+  newPlace.save(err => {
+    if (err) {
+      next(err);
+      res.render("places/new", { errors: newPlace.errors });
+    }
+    res.redirect("/places");
+  });
+});
+
+router.post("/:id/delete", (req, res, next) => {
+  const placeId = req.params.id;
+  Place.findByIdAndRemove({ placeId }, (err, place) => {
+    if (err) {
+      next(err);
+    }
+    res.redirect("/places");
+  });
+});
+
+router.get("/:id/edit", (req, res, next) => {
+  const placeId = req.params.id;
+  Place.findById({ placeId }, (err, placeDetails) => {
+    if (err) {
+      next(err);
+    }
+    res.render("places/edit", { place: placeDetails });
+  });
+});
+
+router.post("/:id", (req, res, next) => {
+  const placeId = req.params.id;
+  const updates = {
+    title: req.body.title,
+    description: req.body.description,
+    location: req.body.location
+  };
+  Place.findByIdAndUpdate(placeId, updates, (err, place) => {
+    place.save(err => {
+      if (err) {
+        next(err);
+        res.render("places/new");
+      }
+      res.redirect("/places");
+    });
+  });
+});
+
+//location with Map
 router.post((req, res, next) => {
   // Get Params from POST
   let location = {
